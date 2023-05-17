@@ -4,7 +4,19 @@
 // swift-module-flags-ignorable: -enable-bare-slash-regex
 import Darwin
 import Dispatch
+import Dispatch/*.DispatchTimeInterval*/
 import Foundation
+import Foundation/*.BlockOperation*/
+import Foundation/*.Date*/
+import Foundation/*.DateFormatter*/
+import Foundation/*.NSCopying*/
+import Foundation/*.NSLock*/
+import Foundation/*.NSObject*/
+import Foundation/*.NSRecursiveLock*/
+import Foundation/*.Operation*/
+import Foundation/*.OperationQueue*/
+import Foundation/*.Thread*/
+import Foundation/*.TimeInterval*/
 @_exported import RxSwift
 import Swift
 import _Concurrency
@@ -61,12 +73,6 @@ extension RxSwift.ObserverType {
 extension RxSwift.Disposables {
   public static func create(_ disposable1: any RxSwift.Disposable, _ disposable2: any RxSwift.Disposable) -> any RxSwift.Cancelable
 }
-public struct Binder<Value> : RxSwift.ObserverType {
-  public typealias Element = Value
-  public init<Target>(_ target: Target, scheduler: any RxSwift.ImmediateSchedulerType = MainScheduler(), binding: @escaping (Target, Value) -> Swift.Void) where Target : AnyObject
-  public func on(_ event: RxSwift.Event<Value>)
-  public func asObserver() -> RxSwift.AnyObserver<Value>
-}
 final public class BooleanDisposable : RxSwift.Cancelable {
   public init()
   public init(isDisposed: Swift.Bool)
@@ -83,17 +89,11 @@ public protocol Cancelable : RxSwift.Disposable {
   var isDisposed: Swift.Bool { get }
 }
 extension RxSwift.ObservableType {
-  public func `catch`(_ handler: @escaping (any Swift.Error) throws -> RxSwift.Observable<Self.Element>) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "catch(_:)")
   public func catchError(_ handler: @escaping (any Swift.Error) throws -> RxSwift.Observable<Self.Element>) -> RxSwift.Observable<Self.Element>
-  public func catchAndReturn(_ element: Self.Element) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "catchAndReturn(_:)")
   public func catchErrorJustReturn(_ element: Self.Element) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
-  @available(*, deprecated, renamed: "catch(onSuccess:onFailure:onDisposed:)")
   public static func catchError<Sequence>(_ sequence: Sequence) -> RxSwift.Observable<Self.Element> where Sequence : Swift.Sequence, Sequence.Element == RxSwift.Observable<Self.Element>
-  public static func `catch`<Sequence>(sequence: Sequence) -> RxSwift.Observable<Self.Element> where Sequence : Swift.Sequence, Sequence.Element == RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
   public func retry() -> RxSwift.Observable<Self.Element>
@@ -151,7 +151,7 @@ extension RxSwift.ObservableType {
 public enum CompletableTrait {
 }
 public typealias Completable = RxSwift.PrimitiveSequence<RxSwift.CompletableTrait, Swift.Never>
-@frozen public enum CompletableEvent {
+public enum CompletableEvent {
   case error(any Swift.Error)
   case completed
 }
@@ -159,8 +159,7 @@ extension RxSwift.PrimitiveSequenceType where Self.Element == Swift.Never, Self.
   public typealias CompletableObserver = (RxSwift.CompletableEvent) -> Swift.Void
   public static func create(subscribe: @escaping (@escaping Self.CompletableObserver) -> any RxSwift.Disposable) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
   public func subscribe(_ observer: @escaping (RxSwift.CompletableEvent) -> Swift.Void) -> any RxSwift.Disposable
-  public func subscribe<Object>(with object: Object, onCompleted: ((Object) -> Swift.Void)? = nil, onError: ((Object, any Swift.Error) -> Swift.Void)? = nil, onDisposed: ((Object) -> Swift.Void)? = nil) -> any RxSwift.Disposable where Object : AnyObject
-  public func subscribe(onCompleted: (() -> Swift.Void)? = nil, onError: ((any Swift.Error) -> Swift.Void)? = nil, onDisposed: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
+  public func subscribe(onCompleted: (() -> Swift.Void)? = nil, onError: ((any Swift.Error) -> Swift.Void)? = nil) -> any RxSwift.Disposable
 }
 extension RxSwift.PrimitiveSequenceType where Self.Element == Swift.Never, Self.Trait == RxSwift.CompletableTrait {
   public static func error(_ error: any Swift.Error) -> RxSwift.Completable
@@ -222,6 +221,7 @@ public class ConcurrentDispatchQueueScheduler : RxSwift.SchedulerType {
     get
   }
   public init(queue: Dispatch.DispatchQueue, leeway: Dispatch.DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0))
+  @available(iOS 8, macOS 10.10, *)
   convenience public init(qos: Dispatch.DispatchQoS, leeway: Dispatch.DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0))
   final public func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> any RxSwift.Disposable) -> any RxSwift.Disposable
   final public func scheduleRelative<StateType>(_ state: StateType, dueTime: RxSwift.RxTimeInterval, action: @escaping (StateType) -> any RxSwift.Disposable) -> any RxSwift.Disposable
@@ -260,16 +260,6 @@ extension RxSwift.ObservableType {
 extension RxSwift.ObservableType {
   public func debug(_ identifier: Swift.String? = nil, trimOutput: Swift.Bool = false, file: Swift.String = #file, line: Swift.UInt = #line, function: Swift.String = #function) -> RxSwift.Observable<Self.Element>
 }
-extension RxSwift.ObservableType where Self.Element == Foundation.Data {
-  public func decode<Item, Decoder>(type: Item.Type, decoder: Decoder) -> RxSwift.Observable<Item> where Item : Swift.Decodable, Decoder : RxSwift.DataDecoder
-}
-public protocol DataDecoder {
-  func decode<Item>(_ type: Item.Type, from data: Foundation.Data) throws -> Item where Item : Swift.Decodable
-}
-extension Foundation.JSONDecoder : RxSwift.DataDecoder {
-}
-extension Foundation.PropertyListDecoder : RxSwift.DataDecoder {
-}
 extension RxSwift.ObservableType {
   public func ifEmpty(default: Self.Element) -> RxSwift.Observable<Self.Element>
 }
@@ -284,6 +274,112 @@ extension RxSwift.ObservableType {
 }
 extension RxSwift.ObservableType where Self.Element : RxSwift.EventConvertible {
   public func dematerialize() -> RxSwift.Observable<Self.Element.Element>
+}
+extension RxSwift.Observable {
+  @available(*, deprecated, renamed: "from(optional:)", message: "Implicit conversions from any type to optional type are allowed and that is causing issues with `from` operator overloading.")
+  public static func from(_ optional: Element?) -> RxSwift.Observable<Element>
+  @available(*, deprecated, renamed: "from(optional:scheduler:)", message: "Implicit conversions from any type to optional type are allowed and that is causing issues with `from` operator overloading.")
+  public static func from(_ optional: Element?, scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Observable<Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, message: "Please use enumerated().map()")
+  public func mapWithIndex<Result>(_ selector: @escaping (Self.Element, Swift.Int) throws -> Result) -> RxSwift.Observable<Result>
+  @available(*, deprecated, message: "Please use enumerated().flatMap()")
+  public func flatMapWithIndex<Source>(_ selector: @escaping (Self.Element, Swift.Int) throws -> Source) -> RxSwift.Observable<Source.Element> where Source : RxSwift.ObservableConvertibleType
+  @available(*, deprecated, message: "Please use enumerated().skipWhile().map()")
+  public func skipWhileWithIndex(_ predicate: @escaping (Self.Element, Swift.Int) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
+  @available(*, deprecated, message: "Please use enumerated().takeWhile().map()")
+  public func takeWhileWithIndex(_ predicate: @escaping (Self.Element, Swift.Int) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.Disposable {
+  @available(*, deprecated, renamed: "disposed(by:)", message: "use disposed(by:) instead")
+  public func addDisposableTo(_ bag: RxSwift.DisposeBag)
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "share(replay:)", message: "use share(replay: 1) instead")
+  public func shareReplayLatestWhileConnected() -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "share(replay:)", message: "Suggested replacement is `share(replay: 1)`. In case old 3.x behavior of `shareReplay` is required please use `share(replay: 1, scope: .forever)` instead.")
+  public func shareReplay(_ bufferSize: Swift.Int) -> RxSwift.Observable<Self.Element>
+}
+@available(*, deprecated, message: "Variable is deprecated. Please use `BehaviorRelay` as a replacement.")
+final public class Variable<Element> {
+  final public var value: Element {
+    get
+    set(newValue)
+  }
+  public init(_ value: Element)
+  final public func asObservable() -> RxSwift.Observable<Element>
+  @objc deinit
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "delay(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func delay(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "timeout(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func timeout(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+  @available(*, deprecated, renamed: "timeout(_:other:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func timeout<OtherSource>(_ dueTime: Foundation.TimeInterval, other: OtherSource, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element> where OtherSource : RxSwift.ObservableConvertibleType, Self.Element == OtherSource.Element
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "skip(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func skip(_ duration: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType where Self.Element : Swift.FixedWidthInteger {
+  @available(*, deprecated, renamed: "interval(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public static func interval(_ period: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType where Self.Element : Swift.FixedWidthInteger {
+  @available(*, deprecated, renamed: "timer(_:period:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public static func timer(_ dueTime: Foundation.TimeInterval, period: Foundation.TimeInterval? = nil, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "throttle(_:latest:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func throttle(_ dueTime: Foundation.TimeInterval, latest: Swift.Bool = true, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "take(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func take(_ duration: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "delaySubscription(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func delaySubscription(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "window(_:)", message: "Use DispatchTimeInterval overload instead.")
+  public func window(timeSpan: Foundation.TimeInterval, count: Swift.Int, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<RxSwift.Observable<Self.Element>>
+}
+extension RxSwift.PrimitiveSequence {
+  @available(*, deprecated, renamed: "delay(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func delay(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
+  @available(*, deprecated, renamed: "delaySubscription(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func delaySubscription(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
+  @available(*, deprecated, renamed: "timeout(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func timeout(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
+  @available(*, deprecated, renamed: "timeout(_:other:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func timeout(_ dueTime: Foundation.TimeInterval, other: RxSwift.PrimitiveSequence<Trait, Element>, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
+}
+extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.SingleTrait {
+  @available(*, deprecated, renamed: "do(onSuccess:onError:onSubscribe:onSubscribed:onDispose:)")
+  public func `do`(onNext: ((Self.Element) throws -> Swift.Void)?, onError: ((any Swift.Error) throws -> Swift.Void)? = nil, onSubscribe: (() -> Swift.Void)? = nil, onSubscribed: (() -> Swift.Void)? = nil, onDispose: (() -> Swift.Void)? = nil) -> RxSwift.Single<Self.Element>
+}
+extension RxSwift.ObservableType {
+  @available(*, deprecated, renamed: "buffer(timeSpan:count:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public func buffer(timeSpan: Foundation.TimeInterval, count: Swift.Int, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<[Self.Element]>
+}
+extension RxSwift.PrimitiveSequenceType where Self.Element : Swift.FixedWidthInteger {
+  @available(*, deprecated, renamed: "timer(_:scheduler:)", message: "Use DispatchTimeInterval overload instead.")
+  public static func timer(_ dueTime: Foundation.TimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
+}
+extension RxSwift.PrimitiveSequence where Trait == RxSwift.CompletableTrait, Element == Swift.Never {
+  @available(*, deprecated, renamed: "zip", message: "Use Completable.zip instead.")
+  public static func merge<Collection>(_ sources: Collection) -> RxSwift.Completable where Collection : Swift.Collection, Collection.Element == RxSwift.PrimitiveSequence<RxSwift.CompletableTrait, Swift.Never>
+  @available(*, deprecated, renamed: "zip", message: "Use Completable.zip instead.")
+  public static func merge(_ sources: [RxSwift.Completable]) -> RxSwift.Completable
+  @available(*, deprecated, renamed: "zip", message: "Use Completable.zip instead.")
+  public static func merge(_ sources: RxSwift.Completable...) -> RxSwift.Completable
 }
 public protocol Disposable {
   func dispose()
@@ -300,14 +396,9 @@ extension RxSwift.Disposable {
 }
 extension RxSwift.DisposeBag {
   convenience public init(disposing disposables: any RxSwift.Disposable...)
-  convenience public init(@RxSwift.DisposeBag.DisposableBuilder builder: () -> [any RxSwift.Disposable])
   convenience public init(disposing disposables: [any RxSwift.Disposable])
   final public func insert(_ disposables: any RxSwift.Disposable...)
-  final public func insert(@RxSwift.DisposeBag.DisposableBuilder builder: () -> [any RxSwift.Disposable])
   final public func insert(_ disposables: [any RxSwift.Disposable])
-  @_functionBuilder public struct DisposableBuilder {
-    public static func buildBlock(_ disposables: any RxSwift.Disposable...) -> [any RxSwift.Disposable]
-  }
 }
 @_hasMissingDesignatedInitializers public class DisposeBase {
   @objc deinit
@@ -319,15 +410,12 @@ extension RxSwift.ObservableType {
   public func distinctUntilChanged<Key>(_ keySelector: @escaping (Self.Element) throws -> Key) -> RxSwift.Observable<Self.Element> where Key : Swift.Equatable
   public func distinctUntilChanged(_ comparer: @escaping (Self.Element, Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
   public func distinctUntilChanged<K>(_ keySelector: @escaping (Self.Element) throws -> K, comparer: @escaping (K, K) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
-  public func distinctUntilChanged<Property>(at keyPath: Swift.KeyPath<Self.Element, Property>) -> RxSwift.Observable<Self.Element> where Property : Swift.Equatable
 }
 extension RxSwift.ObservableType {
   public func `do`(onNext: ((Self.Element) throws -> Swift.Void)? = nil, afterNext: ((Self.Element) throws -> Swift.Void)? = nil, onError: ((any Swift.Error) throws -> Swift.Void)? = nil, afterError: ((any Swift.Error) throws -> Swift.Void)? = nil, onCompleted: (() throws -> Swift.Void)? = nil, afterCompleted: (() throws -> Swift.Void)? = nil, onSubscribe: (() -> Swift.Void)? = nil, onSubscribed: (() -> Swift.Void)? = nil, onDispose: (() -> Swift.Void)? = nil) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
-  @available(*, deprecated, renamed: "element(at:)")
   public func elementAt(_ index: Swift.Int) -> RxSwift.Observable<Self.Element>
-  public func element(at index: Swift.Int) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
   public static func empty() -> RxSwift.Observable<Self.Element>
@@ -352,7 +440,7 @@ extension RxSwift.RxError {
     get
   }
 }
-@frozen public enum Event<Element> {
+public enum Event<Element> {
   case next(Element)
   case error(any Swift.Error)
   case completed
@@ -381,6 +469,8 @@ extension RxSwift.Event {
 }
 public protocol EventConvertible {
   associatedtype Element
+  @available(*, deprecated, renamed: "Element")
+  typealias ElementType = Self.Element
   var event: RxSwift.Event<Self.Element> { get }
 }
 extension RxSwift.Event : RxSwift.EventConvertible {
@@ -392,7 +482,7 @@ extension RxSwift.ObservableType {
   public func filter(_ predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
-  public func ignoreElements() -> RxSwift.Observable<Swift.Never>
+  public func ignoreElements() -> RxSwift.Completable
 }
 extension RxSwift.ObservableType {
   public static func generate(initialState: Self.Element, condition: @escaping (Self.Element) throws -> Swift.Bool, scheduler: any RxSwift.ImmediateSchedulerType = CurrentThreadScheduler.instance, iterate: @escaping (Self.Element) throws -> Self.Element) -> RxSwift.Observable<Self.Element>
@@ -426,187 +516,6 @@ public protocol ImmediateSchedulerType {
 extension RxSwift.ImmediateSchedulerType {
   public func scheduleRecursive<State>(_ state: State, action: @escaping (_ state: State, _ recurse: (State) -> Swift.Void) -> Swift.Void) -> any RxSwift.Disposable
 }
-public protocol InfallibleType : RxSwift.ObservableConvertibleType {
-}
-public struct Infallible<Element> : RxSwift.InfallibleType {
-  public func asObservable() -> RxSwift.Observable<Element>
-}
-extension RxSwift.InfallibleType {
-  public func subscribe<Object>(with object: Object, onNext: ((Object, Self.Element) -> Swift.Void)? = nil, onCompleted: ((Object) -> Swift.Void)? = nil, onDisposed: ((Object) -> Swift.Void)? = nil) -> any RxSwift.Disposable where Object : AnyObject
-  public func subscribe(onNext: ((Self.Element) -> Swift.Void)? = nil, onCompleted: (() -> Swift.Void)? = nil, onDisposed: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
-  public func subscribe(_ on: @escaping (RxSwift.InfallibleEvent<Self.Element>) -> Swift.Void) -> any RxSwift.Disposable
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2>(_ source1: I1, _ source2: I2, resultSelector: @escaping (I1.Element, I2.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2>(_ source1: O1, _ source2: O2) -> RxSwift.Infallible<(O1.Element, O2.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2, I3>(_ source1: I1, _ source2: I2, _ source3: I3, resultSelector: @escaping (I1.Element, I2.Element, I3.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType, I3 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2, O3>(_ source1: O1, _ source2: O2, _ source3: O3) -> RxSwift.Infallible<(O1.Element, O2.Element, O3.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType, O3 : RxSwift.InfallibleType
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2, I3, I4>(_ source1: I1, _ source2: I2, _ source3: I3, _ source4: I4, resultSelector: @escaping (I1.Element, I2.Element, I3.Element, I4.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType, I3 : RxSwift.InfallibleType, I4 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2, O3, O4>(_ source1: O1, _ source2: O2, _ source3: O3, _ source4: O4) -> RxSwift.Infallible<(O1.Element, O2.Element, O3.Element, O4.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType, O3 : RxSwift.InfallibleType, O4 : RxSwift.InfallibleType
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2, I3, I4, I5>(_ source1: I1, _ source2: I2, _ source3: I3, _ source4: I4, _ source5: I5, resultSelector: @escaping (I1.Element, I2.Element, I3.Element, I4.Element, I5.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType, I3 : RxSwift.InfallibleType, I4 : RxSwift.InfallibleType, I5 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2, O3, O4, O5>(_ source1: O1, _ source2: O2, _ source3: O3, _ source4: O4, _ source5: O5) -> RxSwift.Infallible<(O1.Element, O2.Element, O3.Element, O4.Element, O5.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType, O3 : RxSwift.InfallibleType, O4 : RxSwift.InfallibleType, O5 : RxSwift.InfallibleType
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2, I3, I4, I5, I6>(_ source1: I1, _ source2: I2, _ source3: I3, _ source4: I4, _ source5: I5, _ source6: I6, resultSelector: @escaping (I1.Element, I2.Element, I3.Element, I4.Element, I5.Element, I6.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType, I3 : RxSwift.InfallibleType, I4 : RxSwift.InfallibleType, I5 : RxSwift.InfallibleType, I6 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2, O3, O4, O5, O6>(_ source1: O1, _ source2: O2, _ source3: O3, _ source4: O4, _ source5: O5, _ source6: O6) -> RxSwift.Infallible<(O1.Element, O2.Element, O3.Element, O4.Element, O5.Element, O6.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType, O3 : RxSwift.InfallibleType, O4 : RxSwift.InfallibleType, O5 : RxSwift.InfallibleType, O6 : RxSwift.InfallibleType
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2, I3, I4, I5, I6, I7>(_ source1: I1, _ source2: I2, _ source3: I3, _ source4: I4, _ source5: I5, _ source6: I6, _ source7: I7, resultSelector: @escaping (I1.Element, I2.Element, I3.Element, I4.Element, I5.Element, I6.Element, I7.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType, I3 : RxSwift.InfallibleType, I4 : RxSwift.InfallibleType, I5 : RxSwift.InfallibleType, I6 : RxSwift.InfallibleType, I7 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2, O3, O4, O5, O6, O7>(_ source1: O1, _ source2: O2, _ source3: O3, _ source4: O4, _ source5: O5, _ source6: O6, _ source7: O7) -> RxSwift.Infallible<(O1.Element, O2.Element, O3.Element, O4.Element, O5.Element, O6.Element, O7.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType, O3 : RxSwift.InfallibleType, O4 : RxSwift.InfallibleType, O5 : RxSwift.InfallibleType, O6 : RxSwift.InfallibleType, O7 : RxSwift.InfallibleType
-}
-extension RxSwift.Infallible {
-  public static func combineLatest<I1, I2, I3, I4, I5, I6, I7, I8>(_ source1: I1, _ source2: I2, _ source3: I3, _ source4: I4, _ source5: I5, _ source6: I6, _ source7: I7, _ source8: I8, resultSelector: @escaping (I1.Element, I2.Element, I3.Element, I4.Element, I5.Element, I6.Element, I7.Element, I8.Element) throws -> Element) -> RxSwift.Infallible<Element> where I1 : RxSwift.InfallibleType, I2 : RxSwift.InfallibleType, I3 : RxSwift.InfallibleType, I4 : RxSwift.InfallibleType, I5 : RxSwift.InfallibleType, I6 : RxSwift.InfallibleType, I7 : RxSwift.InfallibleType, I8 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType where Self.Element == Any {
-  public static func combineLatest<O1, O2, O3, O4, O5, O6, O7, O8>(_ source1: O1, _ source2: O2, _ source3: O3, _ source4: O4, _ source5: O5, _ source6: O6, _ source7: O7, _ source8: O8) -> RxSwift.Infallible<(O1.Element, O2.Element, O3.Element, O4.Element, O5.Element, O6.Element, O7.Element, O8.Element)> where O1 : RxSwift.InfallibleType, O2 : RxSwift.InfallibleType, O3 : RxSwift.InfallibleType, O4 : RxSwift.InfallibleType, O5 : RxSwift.InfallibleType, O6 : RxSwift.InfallibleType, O7 : RxSwift.InfallibleType, O8 : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType {
-  public static func combineLatest<Collection>(_ collection: Collection, resultSelector: @escaping ([Collection.Element.Element]) throws -> Self.Element) -> RxSwift.Infallible<Self.Element> where Collection : Swift.Collection, Collection.Element : RxSwift.InfallibleType
-  public static func combineLatest<Collection>(_ collection: Collection) -> RxSwift.Infallible<[Self.Element]> where Collection : Swift.Collection, Self.Element == Collection.Element.Element, Collection.Element : RxSwift.InfallibleType
-}
-@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-extension RxSwift.InfallibleType {
-  public var values: _Concurrency.AsyncStream<Self.Element> {
-    get
-  }
-}
-public enum InfallibleEvent<Element> {
-  case next(Element)
-  case completed
-}
-extension RxSwift.Infallible {
-  public typealias InfallibleObserver = (RxSwift.InfallibleEvent<Element>) -> Swift.Void
-  public static func create(subscribe: @escaping (@escaping RxSwift.Infallible<Element>.InfallibleObserver) -> any RxSwift.Disposable) -> RxSwift.Infallible<Element>
-}
-extension RxSwift.InfallibleEvent : RxSwift.EventConvertible {
-  public var event: RxSwift.Event<Element> {
-    get
-  }
-}
-extension RxSwift.InfallibleType {
-  public func debug(_ identifier: Swift.String? = nil, trimOutput: Swift.Bool = false, file: Swift.String = #file, line: Swift.UInt = #line, function: Swift.String = #function) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func just(_ element: Self.Element) -> RxSwift.Infallible<Self.Element>
-  public static func just(_ element: Self.Element, scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Infallible<Self.Element>
-  public static func never() -> RxSwift.Infallible<Self.Element>
-  public static func empty() -> RxSwift.Infallible<Self.Element>
-  public static func deferred(_ observableFactory: @escaping () throws -> RxSwift.Infallible<Self.Element>) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.Infallible {
-  public static func of(_ elements: Element..., scheduler: any RxSwift.ImmediateSchedulerType = CurrentThreadScheduler.instance) -> RxSwift.Infallible<Element>
-}
-extension RxSwift.Infallible {
-  public static func from(_ array: [Element], scheduler: any RxSwift.ImmediateSchedulerType = CurrentThreadScheduler.instance) -> RxSwift.Infallible<Element>
-  public static func from<Sequence>(_ sequence: Sequence, scheduler: any RxSwift.ImmediateSchedulerType = CurrentThreadScheduler.instance) -> RxSwift.Infallible<Element> where Element == Sequence.Element, Sequence : Swift.Sequence
-}
-extension RxSwift.InfallibleType {
-  public func filter(_ predicate: @escaping (Self.Element) -> Swift.Bool) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public func map<Result>(_ transform: @escaping (Self.Element) -> Result) -> RxSwift.Infallible<Result>
-  public func compactMap<Result>(_ transform: @escaping (Self.Element) -> Result?) -> RxSwift.Infallible<Result>
-}
-extension RxSwift.InfallibleType where Self.Element : Swift.Equatable {
-  public func distinctUntilChanged() -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public func distinctUntilChanged<Key>(_ keySelector: @escaping (Self.Element) throws -> Key) -> RxSwift.Infallible<Self.Element> where Key : Swift.Equatable
-  public func distinctUntilChanged(_ comparer: @escaping (Self.Element, Self.Element) throws -> Swift.Bool) -> RxSwift.Infallible<Self.Element>
-  public func distinctUntilChanged<K>(_ keySelector: @escaping (Self.Element) throws -> K, comparer: @escaping (K, K) throws -> Swift.Bool) -> RxSwift.Infallible<Self.Element>
-  public func distinctUntilChanged<Property>(at keyPath: Swift.KeyPath<Self.Element, Property>) -> RxSwift.Infallible<Self.Element> where Property : Swift.Equatable
-}
-extension RxSwift.InfallibleType {
-  public func debounce(_ dueTime: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Infallible<Self.Element>
-  public func throttle(_ dueTime: RxSwift.RxTimeInterval, latest: Swift.Bool = true, scheduler: any RxSwift.SchedulerType) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public func flatMap<Source>(_ selector: @escaping (Self.Element) -> Source) -> RxSwift.Infallible<Source.Element> where Source : RxSwift.ObservableConvertibleType
-  public func flatMapLatest<Source>(_ selector: @escaping (Self.Element) -> Source) -> RxSwift.Infallible<Source.Element> where Source : RxSwift.ObservableConvertibleType
-  public func flatMapFirst<Source>(_ selector: @escaping (Self.Element) -> Source) -> RxSwift.Infallible<Source.Element> where Source : RxSwift.ObservableConvertibleType
-}
-extension RxSwift.InfallibleType {
-  public func concat<Source>(_ second: Source) -> RxSwift.Infallible<Self.Element> where Source : RxSwift.ObservableConvertibleType, Self.Element == Source.Element
-  public static func concat<Sequence>(_ sequence: Sequence) -> RxSwift.Infallible<Self.Element> where Sequence : Swift.Sequence, Sequence.Element == RxSwift.Infallible<Self.Element>
-  public static func concat<Collection>(_ collection: Collection) -> RxSwift.Infallible<Self.Element> where Collection : Swift.Collection, Collection.Element == RxSwift.Infallible<Self.Element>
-  public static func concat(_ sources: RxSwift.Infallible<Self.Element>...) -> RxSwift.Infallible<Self.Element>
-  public func concatMap<Source>(_ selector: @escaping (Self.Element) -> Source) -> RxSwift.Infallible<Source.Element> where Source : RxSwift.ObservableConvertibleType
-}
-extension RxSwift.InfallibleType {
-  public static func merge<Collection>(_ sources: Collection) -> RxSwift.Infallible<Self.Element> where Collection : Swift.Collection, Collection.Element == RxSwift.Infallible<Self.Element>
-  public static func merge(_ sources: [RxSwift.Infallible<Self.Element>]) -> RxSwift.Infallible<Self.Element>
-  public static func merge(_ sources: RxSwift.Infallible<Self.Element>...) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.Infallible {
-  public func `do`(onNext: ((Element) throws -> Swift.Void)? = nil, afterNext: ((Element) throws -> Swift.Void)? = nil, onCompleted: (() throws -> Swift.Void)? = nil, afterCompleted: (() throws -> Swift.Void)? = nil, onSubscribe: (() -> Swift.Void)? = nil, onSubscribed: (() -> Swift.Void)? = nil, onDispose: (() -> Swift.Void)? = nil) -> RxSwift.Infallible<Element>
-}
-extension RxSwift.InfallibleType {
-  public func scan<Seed>(into seed: Seed, accumulator: @escaping (inout Seed, Self.Element) -> Swift.Void) -> RxSwift.Infallible<Seed>
-  public func scan<Seed>(_ seed: Seed, accumulator: @escaping (Seed, Self.Element) -> Seed) -> RxSwift.Infallible<Seed>
-}
-extension RxSwift.InfallibleType {
-  public func startWith(_ element: Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public func take<Source>(until other: Source) -> RxSwift.Infallible<Self.Element> where Source : RxSwift.InfallibleType
-  public func take<Source>(until other: Source) -> RxSwift.Infallible<Self.Element> where Source : RxSwift.ObservableType
-  public func take(until predicate: @escaping (Self.Element) throws -> Swift.Bool, behavior: RxSwift.TakeBehavior = .exclusive) -> RxSwift.Infallible<Self.Element>
-  public func take(while predicate: @escaping (Self.Element) throws -> Swift.Bool, behavior: RxSwift.TakeBehavior = .exclusive) -> RxSwift.Infallible<Self.Element>
-  public func take(_ count: Swift.Int) -> RxSwift.Infallible<Self.Element>
-  public func take(for duration: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Infallible<Self.Element>
-  public func skip(while predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Infallible<Self.Element>
-  public func skip<Source>(until other: Source) -> RxSwift.Infallible<Self.Element> where Source : RxSwift.ObservableType
-}
-extension RxSwift.InfallibleType {
-  public func share(replay: Swift.Int = 0, scope: RxSwift.SubjectLifetimeScope = .whileConnected) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public func withUnretained<Object, Out>(_ obj: Object, resultSelector: @escaping (Object, Self.Element) -> Out) -> RxSwift.Infallible<Out> where Object : AnyObject
-  public func withUnretained<Object>(_ obj: Object) -> RxSwift.Infallible<(Object, Self.Element)> where Object : AnyObject
-}
-extension RxSwift.InfallibleType {
-  public func withLatestFrom<Source, ResultType>(_ second: Source, resultSelector: @escaping (Self.Element, Source.Element) throws -> ResultType) -> RxSwift.Infallible<ResultType> where Source : RxSwift.InfallibleType
-  public func withLatestFrom<Source>(_ second: Source) -> RxSwift.Infallible<Source.Element> where Source : RxSwift.InfallibleType
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, resultSelector: @escaping (E1, E2) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2, E3>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, _ source3: RxSwift.Infallible<E3>, resultSelector: @escaping (E1, E2, E3) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2, E3, E4>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, _ source3: RxSwift.Infallible<E3>, _ source4: RxSwift.Infallible<E4>, resultSelector: @escaping (E1, E2, E3, E4) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2, E3, E4, E5>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, _ source3: RxSwift.Infallible<E3>, _ source4: RxSwift.Infallible<E4>, _ source5: RxSwift.Infallible<E5>, resultSelector: @escaping (E1, E2, E3, E4, E5) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2, E3, E4, E5, E6>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, _ source3: RxSwift.Infallible<E3>, _ source4: RxSwift.Infallible<E4>, _ source5: RxSwift.Infallible<E5>, _ source6: RxSwift.Infallible<E6>, resultSelector: @escaping (E1, E2, E3, E4, E5, E6) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2, E3, E4, E5, E6, E7>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, _ source3: RxSwift.Infallible<E3>, _ source4: RxSwift.Infallible<E4>, _ source5: RxSwift.Infallible<E5>, _ source6: RxSwift.Infallible<E6>, _ source7: RxSwift.Infallible<E7>, resultSelector: @escaping (E1, E2, E3, E4, E5, E6, E7) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
-extension RxSwift.InfallibleType {
-  public static func zip<E1, E2, E3, E4, E5, E6, E7, E8>(_ source1: RxSwift.Infallible<E1>, _ source2: RxSwift.Infallible<E2>, _ source3: RxSwift.Infallible<E3>, _ source4: RxSwift.Infallible<E4>, _ source5: RxSwift.Infallible<E5>, _ source6: RxSwift.Infallible<E6>, _ source7: RxSwift.Infallible<E7>, _ source8: RxSwift.Infallible<E8>, resultSelector: @escaping (E1, E2, E3, E4, E5, E6, E7, E8) throws -> Self.Element) -> RxSwift.Infallible<Self.Element>
-}
 extension RxSwift.ObservableType {
   public static func just(_ element: Self.Element) -> RxSwift.Observable<Self.Element>
   public static func just(_ element: Self.Element, scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Observable<Self.Element>
@@ -615,8 +524,8 @@ extension RxSwift.ObservableType {
   public init()
   public static let instance: RxSwift.MainScheduler
   public static let asyncInstance: RxSwift.SerialDispatchQueueScheduler
-  public static func ensureExecutingOnScheduler(errorMessage: Swift.String? = nil)
-  public static func ensureRunningOnMainThread(errorMessage: Swift.String? = nil)
+  final public class func ensureExecutingOnScheduler(errorMessage: Swift.String? = nil)
+  final public class func ensureRunningOnMainThread(errorMessage: Swift.String? = nil)
   @objc deinit
 }
 extension RxSwift.ObservableType {
@@ -628,7 +537,7 @@ extension RxSwift.ObservableType {
 public enum MaybeTrait {
 }
 public typealias Maybe<Element> = RxSwift.PrimitiveSequence<RxSwift.MaybeTrait, Element>
-@frozen public enum MaybeEvent<Element> {
+public enum MaybeEvent<Element> {
   case success(Element)
   case error(any Swift.Error)
   case completed
@@ -637,8 +546,7 @@ extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.MaybeTrait {
   public typealias MaybeObserver = (RxSwift.MaybeEvent<Self.Element>) -> Swift.Void
   public static func create(subscribe: @escaping (@escaping Self.MaybeObserver) -> any RxSwift.Disposable) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
   public func subscribe(_ observer: @escaping (RxSwift.MaybeEvent<Self.Element>) -> Swift.Void) -> any RxSwift.Disposable
-  public func subscribe<Object>(with object: Object, onSuccess: ((Object, Self.Element) -> Swift.Void)? = nil, onError: ((Object, any Swift.Error) -> Swift.Void)? = nil, onCompleted: ((Object) -> Swift.Void)? = nil, onDisposed: ((Object) -> Swift.Void)? = nil) -> any RxSwift.Disposable where Object : AnyObject
-  public func subscribe(onSuccess: ((Self.Element) -> Swift.Void)? = nil, onError: ((any Swift.Error) -> Swift.Void)? = nil, onCompleted: (() -> Swift.Void)? = nil, onDisposed: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
+  public func subscribe(onSuccess: ((Self.Element) -> Swift.Void)? = nil, onError: ((any Swift.Error) -> Swift.Void)? = nil, onCompleted: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
 }
 extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.MaybeTrait {
   public static func just(_ element: Self.Element) -> RxSwift.Maybe<Self.Element>
@@ -656,8 +564,6 @@ extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.MaybeTrait {
   public func ifEmpty(default: Self.Element) -> RxSwift.Single<Self.Element>
   public func ifEmpty(switchTo other: RxSwift.Maybe<Self.Element>) -> RxSwift.Maybe<Self.Element>
   public func ifEmpty(switchTo other: RxSwift.Single<Self.Element>) -> RxSwift.Single<Self.Element>
-  public func catchAndReturn(_ element: Self.Element) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
-  @available(*, deprecated, renamed: "catchAndReturn(_:)")
   public func catchErrorJustReturn(_ element: Self.Element) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
 }
 extension RxSwift.ObservableType {
@@ -713,26 +619,11 @@ extension RxSwift.Disposables {
   public func asObservable() -> RxSwift.Observable<Element>
   @objc deinit
 }
-@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-extension RxSwift.ObservableConvertibleType {
-  public var values: _Concurrency.AsyncThrowingStream<Self.Element, any Swift.Error> {
-    get
-  }
-}
-#if compiler(>=5.3) && $RethrowsProtocol
-@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-extension _Concurrency.AsyncSequence {
-  public func asObservable() -> RxSwift.Observable<Self.Element>
-}
-#endif
 public protocol ObservableConvertibleType {
   associatedtype Element
+  @available(*, deprecated, renamed: "Element")
+  typealias E = Self.Element
   func asObservable() -> RxSwift.Observable<Self.Element>
-}
-extension RxSwift.ObservableConvertibleType {
-  public func asInfallible(onErrorJustReturn element: Self.Element) -> RxSwift.Infallible<Self.Element>
-  public func asInfallible(onErrorFallbackTo infallible: RxSwift.Infallible<Self.Element>) -> RxSwift.Infallible<Self.Element>
-  public func asInfallible(onErrorRecover: @escaping (any Swift.Error) -> RxSwift.Infallible<Self.Element>) -> RxSwift.Infallible<Self.Element>
 }
 public protocol ObservableType : RxSwift.ObservableConvertibleType {
   func subscribe<Observer>(_ observer: Observer) -> any RxSwift.Disposable where Observer : RxSwift.ObserverType, Self.Element == Observer.Element
@@ -742,7 +633,6 @@ extension RxSwift.ObservableType {
 }
 extension RxSwift.ObservableType {
   public func subscribe(_ on: @escaping (RxSwift.Event<Self.Element>) -> Swift.Void) -> any RxSwift.Disposable
-  public func subscribe<Object>(with object: Object, onNext: ((Object, Self.Element) -> Swift.Void)? = nil, onError: ((Object, any Swift.Error) -> Swift.Void)? = nil, onCompleted: ((Object) -> Swift.Void)? = nil, onDisposed: ((Object) -> Swift.Void)? = nil) -> any RxSwift.Disposable where Object : AnyObject
   public func subscribe(onNext: ((Self.Element) -> Swift.Void)? = nil, onError: ((any Swift.Error) -> Swift.Void)? = nil, onCompleted: (() -> Swift.Void)? = nil, onDisposed: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
 }
 extension RxSwift.Hooks {
@@ -766,12 +656,12 @@ extension RxSwift.ObservableType where Self.Element == Swift.Never {
   public func asCompletable() -> RxSwift.Completable
 }
 extension RxSwift.ObservableType {
-  public func observe(on scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "observe(on:)")
   public func observeOn(_ scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Observable<Self.Element>
 }
 public protocol ObserverType {
   associatedtype Element
+  @available(*, deprecated, renamed: "Element")
+  typealias E = Self.Element
   func on(_ event: RxSwift.Event<Self.Element>)
 }
 extension RxSwift.ObserverType {
@@ -795,6 +685,10 @@ public struct PrimitiveSequence<Trait, Element> {
 public protocol PrimitiveSequenceType {
   associatedtype Trait
   associatedtype Element
+  @available(*, deprecated, renamed: "Trait")
+  typealias TraitType = Self.Trait
+  @available(*, deprecated, renamed: "Element")
+  typealias ElementType = Self.Element
   var primitiveSequence: RxSwift.PrimitiveSequence<Self.Trait, Self.Element> { get }
 }
 extension RxSwift.PrimitiveSequence : RxSwift.PrimitiveSequenceType {
@@ -809,21 +703,11 @@ extension RxSwift.PrimitiveSequence {
   public static func deferred(_ observableFactory: @escaping () throws -> RxSwift.PrimitiveSequence<Trait, Element>) -> RxSwift.PrimitiveSequence<Trait, Element>
   public func delay(_ dueTime: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
   public func delaySubscription(_ dueTime: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
-  public func observe(on scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
-  @available(*, deprecated, renamed: "observe(on:)")
   public func observeOn(_ scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
-  public func subscribe(on scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
-  @available(*, deprecated, renamed: "subscribe(on:)")
   public func subscribeOn(_ scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.PrimitiveSequence<Trait, Element>
-  @available(*, deprecated, renamed: "catch(_:)")
   public func catchError(_ handler: @escaping (any Swift.Error) throws -> RxSwift.PrimitiveSequence<Trait, Element>) -> RxSwift.PrimitiveSequence<Trait, Element>
-  public func `catch`(_ handler: @escaping (any Swift.Error) throws -> RxSwift.PrimitiveSequence<Trait, Element>) -> RxSwift.PrimitiveSequence<Trait, Element>
   public func retry(_ maxAttemptCount: Swift.Int) -> RxSwift.PrimitiveSequence<Trait, Element>
-  public func retry<TriggerObservable, Error>(when notificationHandler: @escaping (RxSwift.Observable<Error>) -> TriggerObservable) -> RxSwift.PrimitiveSequence<Trait, Element> where TriggerObservable : RxSwift.ObservableType, Error : Swift.Error
-  @available(*, deprecated, renamed: "retry(when:)")
   public func retryWhen<TriggerObservable, Error>(_ notificationHandler: @escaping (RxSwift.Observable<Error>) -> TriggerObservable) -> RxSwift.PrimitiveSequence<Trait, Element> where TriggerObservable : RxSwift.ObservableType, Error : Swift.Error
-  public func retry<TriggerObservable>(when notificationHandler: @escaping (RxSwift.Observable<any Swift.Error>) -> TriggerObservable) -> RxSwift.PrimitiveSequence<Trait, Element> where TriggerObservable : RxSwift.ObservableType
-  @available(*, deprecated, renamed: "retry(when:)")
   public func retryWhen<TriggerObservable>(_ notificationHandler: @escaping (RxSwift.Observable<any Swift.Error>) -> TriggerObservable) -> RxSwift.PrimitiveSequence<Trait, Element> where TriggerObservable : RxSwift.ObservableType
   public func debug(_ identifier: Swift.String? = nil, trimOutput: Swift.Bool = false, file: Swift.String = #file, line: Swift.UInt = #line, function: Swift.String = #function) -> RxSwift.PrimitiveSequence<Trait, Element>
   public static func using<Resource>(_ resourceFactory: @escaping () throws -> Resource, primitiveSequenceFactory: @escaping (Resource) throws -> RxSwift.PrimitiveSequence<Trait, Element>) -> RxSwift.PrimitiveSequence<Trait, Element> where Resource : RxSwift.Disposable
@@ -832,30 +716,6 @@ extension RxSwift.PrimitiveSequence {
 }
 extension RxSwift.PrimitiveSequenceType where Self.Element : Swift.FixedWidthInteger {
   public static func timer(_ dueTime: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
-}
-@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.SingleTrait {
-  #if compiler(>=5.3) && $EffectfulProp
-  public var value: Self.Element {
-    get async throws
-  }
-  #endif
-}
-@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.MaybeTrait {
-  #if compiler(>=5.3) && $EffectfulProp
-  public var value: Self.Element? {
-    get async throws
-  }
-  #endif
-}
-@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-extension RxSwift.PrimitiveSequenceType where Self.Element == Swift.Never, Self.Trait == RxSwift.CompletableTrait {
-  #if compiler(>=5.3) && $EffectfulProp
-  public var value: Swift.Void {
-    get async throws
-  }
-  #endif
 }
 extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.SingleTrait {
   public static func zip<E1, E2>(_ source1: RxSwift.PrimitiveSequence<Self.Trait, E1>, _ source2: RxSwift.PrimitiveSequence<Self.Trait, E2>, resultSelector: @escaping (E1, E2) throws -> Self.Element) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
@@ -960,15 +820,14 @@ extension RxSwift.PrimitiveSequenceType where Self.Element == Any, Self.Trait ==
 extension RxSwift.ObservableType where Self.Element : Swift.FixedWidthInteger {
   public static func range(start: Self.Element, count: Self.Element, scheduler: any RxSwift.ImmediateSchedulerType = CurrentThreadScheduler.instance) -> RxSwift.Observable<Self.Element>
 }
-@dynamicMemberLookup public struct Reactive<Base> {
+public struct Reactive<Base> {
   public let base: Base
   public init(_ base: Base)
-  public subscript<Property>(dynamicMember keyPath: Swift.ReferenceWritableKeyPath<Base, Property>) -> RxSwift.Binder<Property> where Base : AnyObject {
-    get
-  }
 }
 public protocol ReactiveCompatible {
   associatedtype ReactiveBase
+  @available(*, deprecated, renamed: "ReactiveBase")
+  typealias CompatibleType = Self.ReactiveBase
   static var rx: RxSwift.Reactive<Self.ReactiveBase>.Type { get set }
   var rx: RxSwift.Reactive<Self.ReactiveBase> { get set }
 }
@@ -1007,26 +866,22 @@ extension RxSwift.ObservableType {
     get
   }
   public func on(_ event: RxSwift.Event<Element>)
-  public func asObserver() -> RxSwift.ReplaySubject<Element>
+  public func asObserver() -> RxSwift.ReplaySubject<Element>.SubjectObserverType
   public func dispose()
   public static func create(bufferSize: Swift.Int) -> RxSwift.ReplaySubject<Element>
   public static func createUnbounded() -> RxSwift.ReplaySubject<Element>
-  public typealias Observer = RxSwift.ReplaySubject<Element>
+  public typealias Observer = RxSwift.ReplaySubject<Element>.SubjectObserverType
   @objc deinit
 }
 extension RxSwift.ObservableType {
-  public func retry<TriggerObservable, Error>(when notificationHandler: @escaping (RxSwift.Observable<Error>) -> TriggerObservable) -> RxSwift.Observable<Self.Element> where TriggerObservable : RxSwift.ObservableType, Error : Swift.Error
-  @available(*, deprecated, renamed: "retry(when:)")
   public func retryWhen<TriggerObservable, Error>(_ notificationHandler: @escaping (RxSwift.Observable<Error>) -> TriggerObservable) -> RxSwift.Observable<Self.Element> where TriggerObservable : RxSwift.ObservableType, Error : Swift.Error
-  public func retry<TriggerObservable>(when notificationHandler: @escaping (RxSwift.Observable<any Swift.Error>) -> TriggerObservable) -> RxSwift.Observable<Self.Element> where TriggerObservable : RxSwift.ObservableType
-  @available(*, deprecated, renamed: "retry(when:)")
   public func retryWhen<TriggerObservable>(_ notificationHandler: @escaping (RxSwift.Observable<any Swift.Error>) -> TriggerObservable) -> RxSwift.Observable<Self.Element> where TriggerObservable : RxSwift.ObservableType
 }
 public enum Hooks {
   public static var recordCallStackOnError: Swift.Bool
 }
 extension RxSwift.ObservableType {
-  public func sample<Source>(_ sampler: Source, defaultValue: Self.Element? = nil) -> RxSwift.Observable<Self.Element> where Source : RxSwift.ObservableType
+  public func sample<Source>(_ sampler: Source) -> RxSwift.Observable<Self.Element> where Source : RxSwift.ObservableType
 }
 extension RxSwift.ObservableType {
   public func scan<A>(into seed: A, accumulator: @escaping (inout A, Self.Element) throws -> Swift.Void) -> RxSwift.Observable<A>
@@ -1066,7 +921,7 @@ extension RxSwift.ObservableType {
   }
   convenience public init(internalSerialQueueName: Swift.String, serialQueueConfiguration: ((Dispatch.DispatchQueue) -> Swift.Void)? = nil, leeway: Dispatch.DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0))
   convenience public init(queue: Dispatch.DispatchQueue, internalSerialQueueName: Swift.String, leeway: Dispatch.DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0))
-  @available(macOS 10.10, *)
+  @available(iOS 8, macOS 10.10, *)
   convenience public init(qos: Dispatch.DispatchQoS, internalSerialQueueName: Swift.String = "rx.global_dispatch_queue.serial", leeway: Dispatch.DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0))
   final public func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> any RxSwift.Disposable) -> any RxSwift.Disposable
   final public func scheduleRelative<StateType>(_ state: StateType, dueTime: RxSwift.RxTimeInterval, action: @escaping (StateType) -> any RxSwift.Disposable) -> any RxSwift.Disposable
@@ -1100,15 +955,15 @@ extension RxSwift.ObservableType {
 public enum SingleTrait {
 }
 public typealias Single<Element> = RxSwift.PrimitiveSequence<RxSwift.SingleTrait, Element>
-public typealias SingleEvent<Element> = Swift.Result<Element, any Swift.Error>
+public enum SingleEvent<Element> {
+  case success(Element)
+  case error(any Swift.Error)
+}
 extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.SingleTrait {
   public typealias SingleObserver = (RxSwift.SingleEvent<Self.Element>) -> Swift.Void
   public static func create(subscribe: @escaping (@escaping Self.SingleObserver) -> any RxSwift.Disposable) -> RxSwift.Single<Self.Element>
   public func subscribe(_ observer: @escaping (RxSwift.SingleEvent<Self.Element>) -> Swift.Void) -> any RxSwift.Disposable
-  @available(*, deprecated, renamed: "subscribe(onSuccess:onFailure:onDisposed:)")
-  public func subscribe(onSuccess: ((Self.Element) -> Swift.Void)? = nil, onError: @escaping ((any Swift.Error) -> Swift.Void), onDisposed: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
-  public func subscribe<Object>(with object: Object, onSuccess: ((Object, Self.Element) -> Swift.Void)? = nil, onFailure: ((Object, any Swift.Error) -> Swift.Void)? = nil, onDisposed: ((Object) -> Swift.Void)? = nil) -> any RxSwift.Disposable where Object : AnyObject
-  public func subscribe(onSuccess: ((Self.Element) -> Swift.Void)? = nil, onFailure: ((any Swift.Error) -> Swift.Void)? = nil, onDisposed: (() -> Swift.Void)? = nil) -> any RxSwift.Disposable
+  public func subscribe(onSuccess: ((Self.Element) -> Swift.Void)? = nil, onError: ((any Swift.Error) -> Swift.Void)? = nil) -> any RxSwift.Disposable
 }
 extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.SingleTrait {
   public static func just(_ element: Self.Element) -> RxSwift.Single<Self.Element>
@@ -1126,8 +981,6 @@ extension RxSwift.PrimitiveSequenceType where Self.Trait == RxSwift.SingleTrait 
   public func flatMapCompletable(_ selector: @escaping (Self.Element) throws -> RxSwift.Completable) -> RxSwift.Completable
   public static func zip<Collection, Result>(_ collection: Collection, resultSelector: @escaping ([Self.Element]) throws -> Result) -> RxSwift.PrimitiveSequence<Self.Trait, Result> where Collection : Swift.Collection, Collection.Element == RxSwift.PrimitiveSequence<RxSwift.SingleTrait, Self.Element>
   public static func zip<Collection>(_ collection: Collection) -> RxSwift.PrimitiveSequence<Self.Trait, [Self.Element]> where Collection : Swift.Collection, Collection.Element == RxSwift.PrimitiveSequence<RxSwift.SingleTrait, Self.Element>
-  public func catchAndReturn(_ element: Self.Element) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
-  @available(*, deprecated, renamed: "catchAndReturn(_:)")
   public func catchErrorJustReturn(_ element: Self.Element) -> RxSwift.PrimitiveSequence<Self.Trait, Self.Element>
   public func asMaybe() -> RxSwift.Maybe<Self.Element>
   public func asCompletable() -> RxSwift.Completable
@@ -1152,13 +1005,9 @@ extension RxSwift.ObservableType {
   public func skip(_ duration: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
-  public func skip<Source>(until other: Source) -> RxSwift.Observable<Self.Element> where Source : RxSwift.ObservableType
-  @available(*, deprecated, renamed: "skip(until:)")
   public func skipUntil<Source>(_ other: Source) -> RxSwift.Observable<Self.Element> where Source : RxSwift.ObservableType
 }
 extension RxSwift.ObservableType {
-  public func skip(while predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "skip(while:)")
   public func skipWhile(_ predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
@@ -1166,17 +1015,16 @@ extension RxSwift.ObservableType {
 }
 public protocol SubjectType : RxSwift.ObservableType {
   associatedtype Observer : RxSwift.ObserverType
+  @available(*, deprecated, renamed: "Observer")
+  typealias SubjectObserverType = Self.Observer
   func asObserver() -> Self.Observer
 }
 extension RxSwift.ObservableType {
-  public func subscribe(on scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "subscribe(on:)")
   public func subscribeOn(_ scheduler: any RxSwift.ImmediateSchedulerType) -> RxSwift.Observable<Self.Element>
 }
 public typealias RxAbstractInteger = Swift.FixedWidthInteger
 extension RxSwift.ObservableType {
   public func flatMapLatest<Source>(_ selector: @escaping (Self.Element) throws -> Source) -> RxSwift.Observable<Source.Element> where Source : RxSwift.ObservableConvertibleType
-  public func flatMapLatest<Source>(_ selector: @escaping (Self.Element) throws -> Source) -> RxSwift.Infallible<Source.Element> where Source : RxSwift.InfallibleType
 }
 extension RxSwift.ObservableType where Self.Element : RxSwift.ObservableConvertibleType {
   public func switchLatest() -> RxSwift.Observable<Self.Element.Element>
@@ -1188,32 +1036,26 @@ extension RxSwift.ObservableType {
   public func take(_ count: Swift.Int) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
-  public func take(for duration: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "take(for:scheduler:)")
   public func take(_ duration: RxSwift.RxTimeInterval, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
   public func takeLast(_ count: Swift.Int) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
-  public func take<Source>(until other: Source) -> RxSwift.Observable<Self.Element> where Source : RxSwift.ObservableType
-  public func take(until predicate: @escaping (Self.Element) throws -> Swift.Bool, behavior: RxSwift.TakeBehavior = .exclusive) -> RxSwift.Observable<Self.Element>
-  public func take(while predicate: @escaping (Self.Element) throws -> Swift.Bool, behavior: RxSwift.TakeBehavior = .exclusive) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "take(until:)")
   public func takeUntil<Source>(_ other: Source) -> RxSwift.Observable<Self.Element> where Source : RxSwift.ObservableType
-  @available(*, deprecated, renamed: "take(until:behavior:)")
-  public func takeUntil(_ behavior: RxSwift.TakeBehavior, predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
-  @available(*, deprecated, renamed: "take(while:)")
-  public func takeWhile(_ predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
+  public func takeUntil(_ behavior: RxSwift.TakeUntilBehavior, predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
 }
-public enum TakeBehavior {
+public enum TakeUntilBehavior {
   case inclusive
   case exclusive
-  public static func == (a: RxSwift.TakeBehavior, b: RxSwift.TakeBehavior) -> Swift.Bool
+  public static func == (a: RxSwift.TakeUntilBehavior, b: RxSwift.TakeUntilBehavior) -> Swift.Bool
   public func hash(into hasher: inout Swift.Hasher)
   public var hashValue: Swift.Int {
     get
   }
+}
+extension RxSwift.ObservableType {
+  public func takeWhile(_ predicate: @escaping (Self.Element) throws -> Swift.Bool) -> RxSwift.Observable<Self.Element>
 }
 extension RxSwift.ObservableType {
   public func throttle(_ dueTime: RxSwift.RxTimeInterval, latest: Swift.Bool = true, scheduler: any RxSwift.SchedulerType) -> RxSwift.Observable<Self.Element>
@@ -1288,10 +1130,6 @@ extension RxSwift.ObservableType {
   public func withLatestFrom<Source>(_ second: Source) -> RxSwift.Observable<Source.Element> where Source : RxSwift.ObservableConvertibleType
 }
 extension RxSwift.ObservableType {
-  public func withUnretained<Object, Out>(_ obj: Object, resultSelector: @escaping (Object, Self.Element) -> Out) -> RxSwift.Observable<Out> where Object : AnyObject
-  public func withUnretained<Object>(_ obj: Object) -> RxSwift.Observable<(Object, Self.Element)> where Object : AnyObject
-}
-extension RxSwift.ObservableType {
   public static func zip<O1, O2>(_ source1: O1, _ source2: O2, resultSelector: @escaping (O1.Element, O2.Element) throws -> Self.Element) -> RxSwift.Observable<Self.Element> where O1 : RxSwift.ObservableType, O2 : RxSwift.ObservableType
 }
 extension RxSwift.ObservableType where Self.Element == Any {
@@ -1337,10 +1175,9 @@ extension RxSwift.ObservableType {
   public static func zip<Collection>(_ collection: Collection, resultSelector: @escaping ([Collection.Element.Element]) throws -> Self.Element) -> RxSwift.Observable<Self.Element> where Collection : Swift.Collection, Collection.Element : RxSwift.ObservableType
   public static func zip<Collection>(_ collection: Collection) -> RxSwift.Observable<[Self.Element]> where Collection : Swift.Collection, Self.Element == Collection.Element.Element, Collection.Element : RxSwift.ObservableType
 }
-extension RxSwift.CompletableEvent : Swift.Sendable {}
 extension RxSwift.SubjectLifetimeScope : Swift.Equatable {}
 extension RxSwift.SubjectLifetimeScope : Swift.Hashable {}
-extension RxSwift.TakeBehavior : Swift.Equatable {}
-extension RxSwift.TakeBehavior : Swift.Hashable {}
+extension RxSwift.TakeUntilBehavior : Swift.Equatable {}
+extension RxSwift.TakeUntilBehavior : Swift.Hashable {}
 extension RxSwift.VirtualTimeComparison : Swift.Equatable {}
 extension RxSwift.VirtualTimeComparison : Swift.Hashable {}
